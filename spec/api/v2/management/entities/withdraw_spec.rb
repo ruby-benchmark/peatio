@@ -1,0 +1,47 @@
+# frozen_string_literal: true
+
+describe API::V2::Management::Entities::Withdraw do
+  context 'fiat' do
+    subject { OpenStruct.new described_class.represent(record).serializable_hash }
+
+    let(:rid) { Faker::Bank.iban }
+    let(:member) { create(:member, :barong) }
+    let(:record) { create(:usd_withdraw, :with_deposit_liability, member: member, rid: rid) }
+
+    it do
+      expect(subject.tid).to eq record.tid
+      expect(subject.rid).to eq rid
+      expect(subject.currency).to eq 'usd'
+      expect(subject.uid).to eq record.member.uid
+      expect(subject.type).to eq 'fiat'
+      expect(subject.amount).to eq record.amount.to_s
+      expect(subject.note).to eq record.note
+      expect(subject.fee).to eq record.fee.to_s
+      expect(subject).not_to respond_to(:txid)
+      expect(subject.state).to eq record.aasm_state
+      expect(subject.created_at).to eq record.created_at.iso8601
+    end
+  end
+
+  context 'coin' do
+    subject { OpenStruct.new described_class.represent(record).serializable_hash }
+
+    let(:rid) { Faker::Blockchain::Bitcoin.address }
+    let(:member) { create(:member, :barong) }
+    let(:record) { create(:btc_withdraw, :with_deposit_liability, member: member, rid: rid) }
+
+    it do
+      expect(subject.tid).to eq record.tid
+      expect(subject.rid).to eq rid
+      expect(subject.currency).to eq 'btc'
+      expect(subject.uid).to eq record.member.uid
+      expect(subject.type).to eq 'coin'
+      expect(subject.amount).to eq record.amount.to_s
+      expect(subject.note).to eq record.note
+      expect(subject.fee).to eq record.fee.to_s
+      expect(subject.blockchain_txid).to eq record.txid
+      expect(subject.state).to eq record.aasm_state
+      expect(subject.created_at).to eq record.created_at.iso8601
+    end
+  end
+end

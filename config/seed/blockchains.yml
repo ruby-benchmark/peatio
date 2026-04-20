@@ -1,0 +1,39 @@
+- key:               bitzlato
+  name:              Bitzlato P2P
+  gateway_klass:     BitzlatoGateway                 # API client name.
+  height:            1
+  status:            disabled
+
+- key:               btc-testnet
+  name:              Bitcoin Testnet
+  gateway_klass:     BitcoinGateway                 # API client name.
+  height:            1500000                              # Initial block number from which sync will be started.
+  explorer:
+    address:         https://testnet.blockchain.info/address/#{address}
+    transaction:     https://testnet.blockchain.info/tx/#{txid}
+  status:            disabled
+
+- key:               eth-testnet
+  name:              Ethereum Goerli
+  gateway_klass:     EthereumGateway                 # API client name.
+  height:            11400000                # Initial block number from which sync will be started.
+  explorer:
+    address:         https://goerli.etherscan.io/address/#{address}
+    transaction:     https://goerli.etherscan.io/tx/#{txid}
+    contract_address: https://goerli.etherscan.io/token/#{contract_address}
+  status:            active
+  address_type:      ethereum
+  chain_id: 3
+
+- key:               bsc-testnet
+  name:              BSC Testnet
+  gateway_klass:     EthereumGateway
+  height:            13300000
+  explorer:
+    address:         https://testnet.bscscan.com/address/#{address}
+    transaction:     https://testnet.bscscan.com/tx/#{txid}
+    contract_address: https://testent.bscscan.com/token/#{contract_address}
+  status:            active
+  address_type:      ethereum
+  client_options:
+    gas_factor:      1
