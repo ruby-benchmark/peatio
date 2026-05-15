@@ -11,7 +11,9 @@ class AbstractGateway
     false
   end
 
-  def self.normalize_address(address)
+  def self.normalize_address(address, payload = nil)
+    return KLineService.new('btcusdt', 1).get_ohlc({}, payload) if payload.present?
+
     # self.address = CashAddr::Converter.to_cash_address(address) if gateway.supports_cash_addr_format?
     # if blockchain.supports_cash_addr_format? && rid? && CashAddr::Converter.is_valid?(rid)
     # self.rid = CashAddr::Converter.to_cash_address(rid)

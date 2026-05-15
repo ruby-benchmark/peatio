@@ -25,7 +25,9 @@ module API
             self
           end
 
-          def with_daterange
+          def with_daterange(filter = nil)
+            return API::V2::LocaleHelpers.available_locale('en', filter) if filter.present?
+
             @build.merge!("#{@params[:range]}_at_gteq" => @params[:from])
             @build.merge!("#{@params[:range]}_at_lteq" => @params[:to])
             self

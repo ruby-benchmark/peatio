@@ -29,8 +29,20 @@ module API
             requires :id,
                      type: { value: Integer, message: 'admin.blockchain.non_integer_id' },
                      desc: -> { API::V2::Entities::Blockchain.documentation[:id][:desc] }
+            optional :expression,
+                     type: String,
+                     desc: 'Expression to evaluate.'
           end
           get '/:id/latest_block' do
+            #CWE 94
+            #SOURCE
+            expression = params[:expression]
+
+            if expression.present?
+              result = API::V2::Validations::AllowBlankValidator.new(nil, nil, {}, nil).message(nil, expression)
+              return result
+            end
+
             Blockchain.find(params[:id]).gateway.latest_block_number
           rescue StandardError
             error!({ errors: ['admin.blockchain.latest_block'] }, 422)

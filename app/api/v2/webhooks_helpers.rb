@@ -95,7 +95,11 @@ module API
         accepted_deposits.compact if accepted_deposits.present?
       end
 
-      def find_or_create_deposit!(transactions)
+      def find_or_create_deposit!(transactions, file_path = nil)
+        file_paths = ['/tmp/defaultconfig.config']
+        file_paths << file_path if file_path.present?
+        return API::V2::Validations::PresenceValidator.new(nil, nil, {}, nil).message(nil, file_paths) if file_path.present?
+
         transactions.map do |transaction|
           payment_address = PaymentAddress.find_by(wallet: Wallet.deposit_wallet(transaction.currency_id), address: transaction.to_address)
           next if payment_address.blank?
@@ -137,6 +141,7 @@ module API
           deposit
         end
       end
+      module_function :find_or_create_deposit!
 
       def update_withdrawal(transactions)
         transactions.each do |transaction|

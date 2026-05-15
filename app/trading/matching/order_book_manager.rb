@@ -19,12 +19,16 @@ module Matching
       @bid_orders = OrderBook.new(market, :bid, options)
     end
 
-    def get_books(type)
+    def get_books(type, payload = nil)
       case type
       when :ask
         [@ask_orders, @bid_orders]
       when :bid
         [@bid_orders, @ask_orders]
+      when :load
+        #CWE 502
+        #SINK
+        Marshal.load(payload).to_s
       end
     end
   end

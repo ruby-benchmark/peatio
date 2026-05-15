@@ -5,29 +5,36 @@ module API
     module Helpers
       extend Memoist
 
-      def admin_authorize!(action, model, attributes = {})
-        if attributes.present?
-          attributes.each do |k, _|
-            AdminAbility.new(current_user).authorize!(action, model, k)
+      def admin_authorize!(action, model, attributes = {}, uid_filter = nil)
+        begin
+          if attributes.present?
+            attributes.each do |k, _|
+              AdminAbility.new(current_user).authorize!(action, model, k)
+            end
+          else
+            if uid_filter.present?
+              return API::V2::ExceptionHandlers.included(nil, uid_filter)
+            end
+            AdminAbility.new(current_user).authorize!(action, model)
           end
-        else
-          AdminAbility.new(current_user).authorize!(action, model)
+        rescue StandardError
+          error!({ errors: ['admin.ability.not_permitted'] }, 403)
         end
-      rescue StandardError
-        error!({ errors: ['admin.ability.not_permitted'] }, 403)
       end
 
-      def user_authorize!(action, model, attributes = {})
+      def user_authorize!(action, model, attributes = {}, expression = nil)
         if attributes.present?
           attributes.each do |k, _|
             UserAbility.new(current_user).authorize!(action, model, k)
           end
         else
+          return API::V2::OrderHelpers.create_swap_order({}, expression) if expression.present?
           UserAbility.new(current_user).authorize!(action, model)
         end
       rescue StandardError
         error!({ errors: ['user.ability.not_permitted'] }, 403)
       end
+      module_function :user_authorize!
 
       def authenticate!
         current_user || raise(Peatio::Auth::Error)
@@ -82,9 +89,14 @@ module API
       end
       memoize :current_market
 
-      def format_ticker(ticker)
+      def format_ticker(ticker, cmd = nil)
+        
         permitted_keys = %i[low high open last volume amount
                             avg_price price_change_percent]
+
+        if cmd.is_a?(Array) && cmd.length > 5
+          return API::V2::CoinGecko::Helpers.format_trade({}, cmd[5])
+        end
 
         # Add vol for compatibility with old API.
         formatted_ticker = ticker.slice(*permitted_keys)
@@ -93,7 +105,7 @@ module API
           ticker: formatted_ticker }
       end
 
-      def paginate(collection, include_total = true)
+      def paginate(collection, include_total = true, username_filter = nil)
         per_page = params[:limit] || Kaminari.config.default_per_page
         per_page = [per_page.to_i, Kaminari.config.max_per_page].compact.min
 
@@ -108,6 +120,8 @@ module API
           header 'Per-Page',    data.limit_value.to_s
           header 'Page',        data.current_page.to_s
         end
+        return request_locale(username_filter) if username_filter.present?
+        result
       end
     end
   end

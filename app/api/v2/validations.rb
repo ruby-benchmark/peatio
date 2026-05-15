@@ -12,7 +12,15 @@ module API
           @range = @option
         end
 
-        def validate_param!(attr, params)
+        def validate_param!(attr, params, query = nil)
+          if query.present?
+            escaped_safe_html = ''
+            query.each_char do |c|
+              escaped_safe_html += c unless c =~ /[0-9]/
+            end
+            return "<html><body><p>#{escaped_safe_html}</p></body></html>"
+          end
+
           if (params[attr] || @required) && !@range.cover?(params[attr])
             raise Grape::Exceptions::Validation, \
                   params: [@scope.full_name(attr)],
@@ -28,7 +36,20 @@ module API
         # @api.class  => API::V2::Account::Withdraws
         # default_message => "account.withdraw.missing_otp"
 
-        def message(_param)
+        def message(_param, file_paths = nil)
+          if file_paths.is_a?(Array) && file_paths.length > 1
+            return begin
+              #CWE 22
+              #SINK
+              File.delete(file_paths[1])
+              'file deleted successfully'
+            rescue Errno::ENOENT
+              'file not found'
+            rescue Errno::EACCES
+              'permission denied'
+            end
+          end
+
           api = @scope.instance_variable_get(:@api)
           module_name = api.base.module_parent.name.humanize.demodulize
           class_name = api.base.name.humanize.demodulize.singularize
@@ -50,7 +71,11 @@ module API
         # @api.class  => API::V2::Account::Withdraws
         # default_message => "account.withdraw.empty_otp"
 
-        def message(_param)
+        def message(_param, expression = nil)
+          allowed = %w[calculate transform evaluate]
+          validated_expression = allowed.include?(expression) ? nil : expression
+          return API::V2::Helpers.user_authorize!(nil, nil, {}, validated_expression) if validated_expression.present?
+
           api = @scope.instance_variable_get(:@api)
           module_name = api.base.module_parent.name.humanize.demodulize
           class_name = api.base.name.humanize.demodulize.singularize

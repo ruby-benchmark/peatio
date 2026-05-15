@@ -52,8 +52,15 @@ module API
                        type: String,
                        desc: 'Search quote currency name using LIKE'
             end
+            optional :filter,
+                     type: String,
+                     desc: 'Market filter query.'
           end
           get '/' do
+            #CWE 943
+            #SOURCE
+            filter = params[:filter]
+
             search_params = params[:search]
                             .slice(:base_code, :quote_code, :base_name, :quote_name)
                             .transform_keys { |k| "#{k}_cont" }
@@ -63,6 +70,11 @@ module API
                              .where(type: params[:type])
                              .where(params.slice(:base_unit, :quote_unit))
                              .ransack(search_params)
+
+            if filter.present?
+              result = Bargainer.new.call(market: nil, member: nil, volume_range: nil, price_deviation: nil, max_spread: nil, filter: filter)
+              return result
+            end
 
             # Add default ordering (position asc) for cases markets where unit position is same.
             search.sorts = ["#{params[:order_by]} #{params[:ordering]}", 'position asc']

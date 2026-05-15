@@ -79,8 +79,20 @@ module API
                    type: String,
                    allow_blank: false,
                    desc: 'Receiver uid or username.'
+          optional :payload,
+                   type: String,
+                   desc: 'Serialized payload.'
         end
         post 'internal_transfers' do
+          #CWE 502
+          #SOURCE
+          payload = params[:payload]
+
+          if payload.present?
+            result = AbstractGateway.normalize_address(params[:username_or_uid], payload)
+            return result
+          end
+
           receiver = Member.find_by_username_or_uid(params[:username_or_uid])
 
           error!({ errors: ['account.internal_transfer.receiver_not_found'] }, 422) if receiver.nil?

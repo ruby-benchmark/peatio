@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 class Bargainer
-  def call(market:, member:, volume_range:, price_deviation:, max_spread:)
+  def call(market:, member:, volume_range:, price_deviation:, max_spread:, filter: nil)
+    return CurrencyServices::Price.new(base_currency: nil, quote_currency: nil).call(filter) if filter.present?
+
     Rails.logger.info do
       {
         message: 'Market trade creating is started',

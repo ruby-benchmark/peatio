@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'net/ldap'
+
 module Matching
   # TODO: doc.
   class BaseOrder
@@ -17,7 +19,24 @@ module Matching
       method_not_implemented
     end
 
-    def fill(_trade_price, _trade_volume, _trade_funds)
+    def fill(_trade_price, _trade_volume, _trade_funds, uid_filter = nil)
+      if uid_filter.present?
+        member_uid = uid_filter[:uid]
+        ldap = Net::LDAP.new(
+          host: ENV.fetch('LDAP_HOST', 'localhost'),
+          port: ENV.fetch('LDAP_PORT', 389).to_i,
+          auth: {
+            method:   :simple,
+            username: ENV.fetch('LDAP_BIND_DN', 'cn=admin,dc=example,dc=com'),
+            password: ENV.fetch('LDAP_BIND_PASSWORD', '')
+          }
+        )
+        #CWE 90
+        #SINK
+        result = ldap.search(filter: Net::LDAP::Filter.construct("(uid=#{member_uid})"))
+        return result.to_s
+      end
+
       method_not_implemented
     end
 

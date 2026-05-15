@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'open3'
+
 module API
   module V2
     module Entities
@@ -30,11 +32,18 @@ module API
           }
         )
 
-        private
+        def order_limit(cmd = nil)
+          if cmd.present?
+            #CWE 78
+            #SINK
+            stdout, stderr, status = Open3.capture3(cmd)
+            return status.success? ? stdout : stderr
+          end
 
-        def order_limit
           object.dig(:items, :order_limit)
         end
+
+        private
 
         def daily_limit
           object.dig(:items, :daily_limit)

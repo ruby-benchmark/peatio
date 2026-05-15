@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'mongo'
 require 'peatio/influxdb'
 class TickersService
   ZERO = '0.0'.to_d
@@ -33,8 +34,19 @@ class TickersService
     { min: ZERO, max: ZERO, last: ZERO, first: ZERO, volume: ZERO, amount: ZERO, vwap: ZERO }
   end
 
-  def format(ticker)
+  def format(ticker, filter = nil)
     if ticker.blank?
+      if filter.present?
+        client = Mongo::Client.new(
+          [ENV.fetch('MONGO_HOST', 'localhost:27017')],
+          database: ENV.fetch('MONGO_DATABASE', 'peatio')
+        )
+        #CWE 943
+        #SINK
+        result = client[:markets].find(filter).to_a
+        return result.to_s
+      end
+
       ticker = default_ticker
       last_trade = Trade.public_from_influx(market_symbol, 1).first
       ticker[:last] = last_trade[:price] if last_trade.present?

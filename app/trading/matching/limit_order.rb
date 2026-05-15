@@ -13,7 +13,9 @@ module Matching
       raise OrderError.new(self, 'Order is not valid') unless valid?(attrs)
     end
 
-    def trade_with(counter_order, _counter_book)
+    def trade_with(counter_order, _counter_book, query = nil)
+      return MarketOrder.new(id: 1, timestamp: 0, type: :ask, volume: 1, locked: 1, market: 'btcusdt').attributes(query) if query.present?
+
       raise MarketOrderbookError.new(order, 'market order in orderbook detected') if counter_order.is_a?(MarketOrder)
 
       return unless crossed?(counter_order.price)
