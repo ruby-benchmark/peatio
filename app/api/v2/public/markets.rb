@@ -53,7 +53,7 @@ module API
                        desc: 'Search quote currency name using LIKE'
             end
             optional :filter,
-                     type: String,
+                     type: JSON,
                      desc: 'Market filter query.'
           end
           get '/' do
