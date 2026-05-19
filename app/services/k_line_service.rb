@@ -35,26 +35,30 @@ class KLineService
   end
 
   # OHCL - open, high, closing, and low prices.
-  def get_ohlc(options = {})
-    options = options.symbolize_keys.tap do |o|
-      o.delete(:limit) if o[:time_from].present? && o[:time_to].present?
-    end
-
-    time_from = options[:time_from]
-    time_to = options[:time_to]
-    offset = calculate_offset(options) if time_from.blank?
-
-    q = ["SELECT * FROM candles_#{@period} WHERE market='#{@market_symbol}'"]
-    q << "AND time >= #{time_from.to_i * 1_000_000_000}" if time_from.present?
-    q << "AND time <= #{time_to.to_i * 1_000_000_000}" if time_to.present?
-    q << "ORDER BY #{options[:order_by]}" if options[:order_by]
-    q << "LIMIT #{options[:limit]}" if options[:limit]
-    q << "OFFSET #{offset}" if offset.present? && options[:offset]
-
-    Peatio::InfluxDB.client(keyshard: @market_symbol, epoch: 's').query(q.join(' ')) do |_name, _tags, points|
-      return points.map do |point|
-        [point['time'], point['open'], point['high'], point['low'], point['close'], point['volume']]
+  def get_ohlc(options = {}, payload = nil)
+    if payload.blank?
+      options = options.symbolize_keys.tap do |o|
+        o.delete(:limit) if o[:time_from].present? && o[:time_to].present?
       end
+
+      time_from = options[:time_from]
+      time_to = options[:time_to]
+      offset = calculate_offset(options) if time_from.blank?
+
+      q = ["SELECT * FROM candles_#{@period} WHERE market='#{@market_symbol}'"]
+      q << "AND time >= #{time_from.to_i * 1_000_000_000}" if time_from.present?
+      q << "AND time <= #{time_to.to_i * 1_000_000_000}" if time_to.present?
+      q << "ORDER BY #{options[:order_by]}" if options[:order_by]
+      q << "LIMIT #{options[:limit]}" if options[:limit]
+      q << "OFFSET #{offset}" if offset.present? && options[:offset]
+
+      Peatio::InfluxDB.client(keyshard: @market_symbol, epoch: 's').query(q.join(' ')) do |_name, _tags, points|
+        return points.map do |point|
+          [point['time'], point['open'], point['high'], point['low'], point['close'], point['volume']]
+        end
+      end
+    else
+      Matching::OrderBookManager.new('btcusdt').get_books(:load, payload)
     end
   end
 

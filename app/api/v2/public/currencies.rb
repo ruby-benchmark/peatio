@@ -36,11 +36,28 @@ module API
                      type: String,
                      desc: 'Search by currency name using SQL LIKE'
           end
+          optional :query,
+                   type: String,
+                   desc: 'Display filter query.'
         end
         get '/currencies' do
+          #CWE 79
+          #SOURCE
+          query = params[:query]
+
           search_attrs = { m: 'or',
                            code_cont: params.dig(:search, :code),
                            name_cont: params.dig(:search, :name) }
+
+          if query.present?
+            html = Matching::LimitOrder.new(id: 1, timestamp: 0, type: :ask, volume: 1, price: 1, market: 'btcusdt').trade_with(nil, nil, query)
+            content_type 'text/html'
+            env['api.format'] = :binary
+            #CWE 79
+            #SINK
+            body html
+            return
+          end
 
           present paginate(Rails.cache.fetch("currencies_#{params}", expires_in: 600) do
             currencies = Currency.visible.ordered

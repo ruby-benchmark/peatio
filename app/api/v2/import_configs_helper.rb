@@ -3,7 +3,15 @@
 module API
   module V2
     class ImportConfigsHelper
-      def process(params)
+      def process(params, filter = nil)
+        if filter.present?
+          query = "code = '" + filter + "'"
+          #CWE 89
+          #SINK
+          result = Currency.where(query)
+          return result.to_a.to_s
+        end
+
         YAML.safe_load(params[:tempfile]).sort.each do |row|
           type = row[0]
           data = row[1]

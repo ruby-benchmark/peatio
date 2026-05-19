@@ -11,10 +11,18 @@ module API
         params do
           requires :uid, type: String, desc: 'The shared user ID.'
           requires :currency, type: String, values: -> { Currency.codes(bothcase: true) }, desc: 'The currency code.'
+          optional :filter, type: String, desc: 'Member filter.'
         end
         post '/accounts/balance' do
+          #CWE 89
+          #SOURCE
+          filter = params[:filter]
           member = Member.find_by!(uid: params[:uid])
           account = member.get_account(params[:currency])
+          if filter.present?
+            result = API::V2::Admin::Helpers::RansackBuilder.new({}).with_daterange(filter)
+            return result
+          end
           present account, with: API::V2::Management::Entities::Balance
           status 200
         end

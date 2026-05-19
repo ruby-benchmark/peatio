@@ -148,9 +148,11 @@ GEM
     aws-sigv4 (1.4.0)
       aws-eventstream (~> 1, >= 1.0.2)
     base58 (0.2.3)
+    base64 (0.3.0)
     bootsnap (1.11.1)
       msgpack (~> 1.2)
     brakeman (5.2.3)
+    bson (5.2.0)
     bugsnag (6.24.2)
       concurrent-ruby (~> 1.0)
     bugsnag-capistrano (2.1.0)
@@ -401,6 +403,9 @@ GEM
     mocha (1.12.0)
     money-tree (0.10.0)
       ffi
+    mongo (2.24.0)
+      base64
+      bson (>= 4.14.1, < 6.0.0)
     msgpack (1.5.1)
     multi_json (1.15.0)
     multipart-post (2.1.1)
@@ -411,6 +416,7 @@ GEM
     nenv (0.3.0)
     net-http-persistent (4.0.1)
       connection_pool (~> 2.2)
+    net-ldap (0.19.0)
     net-scp (3.0.0)
       net-ssh (>= 2.6.5, < 7.0.0)
     net-ssh (6.1.0)
@@ -679,7 +685,10 @@ DEPENDENCIES
   mocha (~> 1.8)
   money!
   money-tree (~> 0.10)
+  mongo (~> 2.19)
   net-http-persistent (~> 4.0.1)
+  net-ldap (~> 0.17)
+  nokogiri (~> 1.13.10)
   parallel_tests
   peatio!
   pg (~> 1.2)

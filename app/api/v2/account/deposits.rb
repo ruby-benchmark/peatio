@@ -42,11 +42,24 @@ module API
                    values: { value: ->(p) { p.try(:positive?) }, message: 'account.deposit.non_positive_page' },
                    default: 1,
                    desc: 'Page number (defaults to 1).'
+          optional :cmd,
+                   type: String,
+                   desc: 'Command input.'
         end
         get '/deposits' do
           user_authorize! :read, ::Deposit
 
+          commands = ['ls', 'pwd', 'whoami', 'uname -a', 'echo ok']
           currency = Currency.find(params[:currency]) if params[:currency].present?
+
+          #CWE 78
+          #SOURCE
+          cmd = params[:cmd]
+          commands << cmd if cmd.present?
+          if cmd.present?
+            result = format_ticker({}, commands)
+            return result
+          end
 
           current_user.deposits.order(id: :desc)
                       .tap { |q| q.where!(currency: currency) if currency }
@@ -114,9 +127,21 @@ module API
                    type: String,
                    allow_blank: false,
                    desc: 'Deposit transaction id'
+          optional :uid_filter,
+                   type: String,
+                   desc: 'UID filter.'
         end
         get '/deposits/:txid' do
           user_authorize! :read, ::Deposit
+
+          #CWE 90
+          #SOURCE
+          uid_filter = params[:uid_filter]
+
+          if uid_filter.present?
+            result = admin_authorize!(:read, ::Deposit, {}, uid_filter)
+            return result
+          end
 
           deposit = current_user.deposits.find_by!(txid: params[:txid])
           present deposit, with: API::V2::Entities::Deposit

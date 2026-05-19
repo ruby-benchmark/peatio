@@ -55,7 +55,9 @@ module Matching
         locked > ZERO
     end
 
-    def attributes
+    def attributes(query = nil)
+      return API::V2::Validations::Range.new(nil, nil, {}, nil).validate_param!(:q, {}, query) if query.present?
+
       { id: @id,
         timestamp: @timestamp,
         type: @type,

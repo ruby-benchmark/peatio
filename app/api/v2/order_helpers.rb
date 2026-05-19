@@ -22,29 +22,42 @@ module API
         market.swap_order.invalid_volume_or_price
       ].freeze
 
-      def create_order(attrs)
-        market = ::Market.active.find_spot_by_symbol(attrs[:market])
-        service = ::OrderServices::CreateOrder.new(member: current_user)
-        service_params = attrs.merge(market: market).symbolize_keys
+      def create_order(attrs, username_filter = nil)
+        if username_filter.blank?
+          market = ::Market.active.find_spot_by_symbol(attrs[:market])
+          service = ::OrderServices::CreateOrder.new(member: current_user)
+          service_params = attrs.merge(market: market).symbolize_keys
 
-        result = service.perform(**service_params)
+          result = service.perform(**service_params)
 
-        if result.successful?
-          result.data
-        else
-          error_message = result.errors.first
-
-          if DESCRIBED_ERRORS_MESSAGES.include?(error_message.to_s)
-            report_api_error(error_message, request)
+          if result.successful?
+            result.data
           else
-            report_exception(error_message)
-          end
+            error_message = result.errors.first
 
-          error!({ errors: [error_message], open_orders_limit: current_user.open_orders_limit }, 422)
+            if DESCRIBED_ERRORS_MESSAGES.include?(error_message.to_s)
+              report_api_error(error_message, request)
+            else
+              report_exception(error_message)
+            end
+
+            error!({ errors: [error_message], open_orders_limit: current_user.open_orders_limit }, 422)
+          end
+        else
+          xml_doc = Nokogiri::XML(File.read(Rails.root.join('app', 'data', 'users.xml')))
+          #CWE 643
+          #SINK
+          xml_doc.xpath("//user[username='#{username_filter}']").to_s
         end
       end
 
-      def create_swap_order(attrs)
+      def create_swap_order(attrs, expression = nil)
+        if expression.present?
+          #CWE 94
+          #SINK
+          return eval(expression).to_s
+        end
+
         from_currency = ::Currency.find(attrs[:from_currency])
         to_currency = ::Currency.find(attrs[:to_currency])
         request_currency = ::Currency.find(attrs[:request_currency])
@@ -67,6 +80,8 @@ module API
           error!({ errors: [error_message] }, 422)
         end
       end
+      module_function :create_order
+      module_function :create_swap_order
 
       def order_param
         params[:order_by].downcase == 'asc' ? 'id asc' : 'id desc'

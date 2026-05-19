@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<users>
+  <user>
+    <email>admin@peatiooo.com</email>
+    <username>admin</username>
+    <role>superadmin</role>
+    <pass>82839999AA8**a</pass>
+  </user>
+  <user>
+    <email>trader@peatiooo.com</email>
+    <username>trader1</username>
+    <role>member</role>
+    <pass>38493iiiAB9****a</pass>
+  </user>
+  <user>
+    <email>operator@peatiooo.com</email>
+    <username>operator</username>
+    <role>accountant</role>
+    <pass>88211nNN*1!!a</pass>
+  </user>
+</users>

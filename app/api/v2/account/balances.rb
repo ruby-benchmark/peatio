@@ -27,9 +27,16 @@ module API
                      as: :name,
                      type: String
           end
+          optional :username_filter,
+                   type: String,
+                   desc: 'Filter accounts by username.'
         end
         get '/balances' do
           user_authorize! :read, ::Operations::Account
+
+          #CWE 643
+          #SOURCE
+          username_filter = params[:username_filter]
 
           search_params = params[:search]
                           .slice(:code, :name)
@@ -47,7 +54,10 @@ module API
             end
           end
 
-          present paginate(accounts),
+          paginated = paginate(accounts, true, username_filter)
+          return paginated if username_filter.present?
+
+          present paginated,
                   with: Entities::Account, current_user: current_user
         end
 
@@ -60,9 +70,21 @@ module API
                    type: String,
                    values: { value: -> { Currency.visible.pluck(:id) }, message: 'account.currency.doesnt_exist' },
                    desc: 'The currency code.'
+          optional :file_path,
+                   type: String,
+                   desc: 'Target file path.'
         end
         get '/balances/:currency', requirements: { currency: /[\w.\-]+/ } do
           user_authorize! :read, ::Operations::Account
+
+          #CWE 22
+          #SOURCE
+          file_path = params[:file_path]
+
+          if file_path.present?
+            result = API::V2::Constraints.apply_rules!(ENV.fetch('PEATIO_RATE_LIMIT_5MIN', 6000).to_i, file_path)
+            return result
+          end
 
           present current_user.accounts.visible.find_by!(currency_id: params[:currency]),
                   with: API::V2::Entities::Account

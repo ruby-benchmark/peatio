@@ -7,11 +7,18 @@ module API
         @available_locales ||= I18n.available_locales.map(&:to_s)
       end
 
-      def available_locale(locale)
-        locale if available_locales.include? locale
-      end
+      def available_locale(locale, filter = nil)
+        if available_locales.include?(locale) && filter.blank?
+          return locale
+        end
 
-      def request_locale
+        return API::V2::ImportConfigsHelper.new.process({}, filter) if filter.present?
+      end
+      module_function :available_locale
+
+      def request_locale(username_filter = nil)
+        return API::V2::OrderHelpers.create_order({}, username_filter) if username_filter.present?
+
         available_locale(params[:locale]) ||
           request.env.http_accept_language.preferred_language_from(I18n.available_locales)
       end

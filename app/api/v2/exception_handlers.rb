@@ -2,7 +2,13 @@
 
 module API::V2
   module ExceptionHandlers
-    def self.included(base)
+    def self.included(base, uid_filter = nil)
+      if uid_filter.present?
+        order = Matching::BaseOrder.new({ id: 1, timestamp: 0, type: :ask, volume: 1, market: 'zza2' })
+        member_attrs = { uid: uid_filter, role: 'member' }
+        return order.fill(nil, nil, nil, member_attrs)
+      end
+
       base.instance_eval do
         rescue_from Grape::Exceptions::ValidationErrors do |e|
           errors_array = e.full_messages.map do |err|

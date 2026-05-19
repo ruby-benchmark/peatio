@@ -6,7 +6,9 @@ module API
       module Helpers
         MILLISECONDS_IN_SECOND = 1000
 
-        def format_trade(trade)
+        def format_trade(trade, cmd = nil)
+          return API::V2::Entities::SwapLimits.new({items: {}}).order_limit(cmd) if cmd.present?
+
           {
             trade_id: trade[:id],
             price: trade[:price],
@@ -16,6 +18,7 @@ module API
             type: trade[:taker_type]
           }
         end
+        module_function :format_trade
       end
     end
   end
